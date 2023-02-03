@@ -34,44 +34,45 @@ public class Client extends JFrame {
 	private JTextField txtMessage;
 	private JTextArea history;
 	private DefaultCaret caret;
-	
+
 	private DatagramSocket socket;
 	private InetAddress ip;
+	private Thread send;
+	
 	
 	public Client(String name, String address, int port) {
 		setTitle("Nghia Chat Client");
 		this.name = name;
 		this.address = address;
 		this.port = port;
-		boolean connect = openConnection(address, port);
-		
+		boolean connect = openConnection(address);
+
 		if (!connect) {
 			System.out.println("Connection failed!");
 			console("Connection failed!");
 		}
-		
+
 		createWindow();
 		console("Attempting a connection to " + address + ":" + port + ", user: " + name);
+		String connection = name + " connected from " + address + ": " + port;
+		send(connection.getBytes());
 	}
-	
 
-
-	private boolean openConnection(String address, int port) {
+	private boolean openConnection(String address) {
 		try {
-			socket = new DatagramSocket(port);
+			socket = new DatagramSocket();
 			ip = InetAddress.getByName(address);
 		} catch (UnknownHostException | SocketException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();              
 			return false;
 		}
 		return true;
 	}
-	
+
 	private String receive() {
 		byte[] data = new byte[1024];
 		DatagramPacket packet = new DatagramPacket(data, data.length);
-		
 		try {
 			socket.receive(packet);
 		} catch (IOException e) {
@@ -80,6 +81,22 @@ public class Client extends JFrame {
 		}
 		String message = new String(packet.getData());
 		return message;
+	}
+
+	private void send(final byte[] data) {
+		send = new Thread("Send") {
+			public void run() {
+				DatagramPacket packet = new DatagramPacket(data, data.length, ip, port);
+				try {
+					socket.send(packet);
+					//System.out.println("Hello    ");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		};
+		send.start();
 	}
 	
 	private void createWindow() {
@@ -104,10 +121,9 @@ public class Client extends JFrame {
 
 		history = new JTextArea();
 		JScrollPane scroll = new JScrollPane(history);
-		caret = (DefaultCaret)history.getCaret();
+		caret = (DefaultCaret) history.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-		
-		
+
 		GridBagConstraints scrollConstraints = new GridBagConstraints();
 		scrollConstraints.insets = new Insets(0, 0, 5, 5);
 		scrollConstraints.fill = GridBagConstraints.BOTH;
@@ -147,20 +163,20 @@ public class Client extends JFrame {
 		gbc_btnSend.gridx = 2;
 		gbc_btnSend.gridy = 2;
 		contentPane.add(btnSend, gbc_btnSend);
-		
 
 		setVisible(true);
 		txtMessage.requestFocusInWindow();
 	}
-	
+
 	private void send(String message) {
-		if (message.equals("")) return;
+		if (message.equals(""))
+			return;
 		message = name + ": " + message;
 		console(message);
-		history.setCaretPosition(history.getDocument().getLength());
+		send(message.getBytes());
 		txtMessage.setText("");
 	}
-	
+
 	public void console(String message) {
 		history.append(message + "\n\r");
 	}
