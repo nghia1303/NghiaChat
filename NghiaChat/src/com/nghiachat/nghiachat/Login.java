@@ -101,7 +101,7 @@ public class Login extends JFrame {
 	private void login(String name, String address, int port) {
 		// TODO Auto-generated method stub
 		dispose();
-		new Client(name, address, port);
+		new ClientWindow(name, address, port);
 
 	}
 

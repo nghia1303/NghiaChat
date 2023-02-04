@@ -24,53 +24,47 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultCaret;
 
-public class Client extends JFrame {
+public class Client {
 
 	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
 
 	private String name, address;
 	private int port;
-	private JTextField txtMessage;
-	private JTextArea history;
-	private DefaultCaret caret;
-
 	private DatagramSocket socket;
 	private InetAddress ip;
 	private Thread send;
+	public int ID = -1;
 	
+	public String getName() {
+		return name;
+	}
+	
+	public String getAddress() {
+		return address;
+	}
+	
+	public int getPort() {
+		return port;
+	}
 	
 	public Client(String name, String address, int port) {
-		setTitle("Nghia Chat Client");
 		this.name = name;
 		this.address = address;
 		this.port = port;
-		boolean connect = openConnection(address);
-
-		if (!connect) {
-			System.out.println("Connection failed!");
-			console("Connection failed!");
-		}
-
-		createWindow();
-		console("Attempting a connection to " + address + ":" + port + ", user: " + name);
-		String connection = name + " connected from " + address + ": " + port;
-		send(connection.getBytes());
 	}
-
-	private boolean openConnection(String address) {
+	
+	public boolean openConnection(String address) {
 		try {
 			socket = new DatagramSocket();
 			ip = InetAddress.getByName(address);
 		} catch (UnknownHostException | SocketException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();              
 			return false;
-		}
+		} 
 		return true;
 	}
-
-	private String receive() {
+	
+	public String receive() {
 		byte[] data = new byte[1024];
 		DatagramPacket packet = new DatagramPacket(data, data.length);
 		try {
@@ -83,13 +77,13 @@ public class Client extends JFrame {
 		return message;
 	}
 
-	private void send(final byte[] data) {
+	public void send(final byte[] data) {
 		send = new Thread("Send") {
 			public void run() {
 				DatagramPacket packet = new DatagramPacket(data, data.length, ip, port);
 				try {
 					socket.send(packet);
-					//System.out.println("Hello    ");
+					// System.out.println("Hello ");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -98,86 +92,13 @@ public class Client extends JFrame {
 		};
 		send.start();
 	}
+
+	public int getID() {
+		return ID;
+	}
 	
-	private void createWindow() {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(880, 580);
-		setLocationRelativeTo(null);
-		contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		setContentPane(contentPane);
-
-		GridBagLayout gbl_contentPane = new GridBagLayout();
-		gbl_contentPane.columnWidths = new int[] { 34, 818, 30, -2 };
-		gbl_contentPane.rowHeights = new int[] { 50, 480, 50 };
-		gbl_contentPane.columnWeights = new double[] { 1.0, 1.0 };
-		gbl_contentPane.rowWeights = new double[] { 1.0, Double.MIN_VALUE };
-		contentPane.setLayout(gbl_contentPane);
-
-		history = new JTextArea();
-		JScrollPane scroll = new JScrollPane(history);
-		caret = (DefaultCaret) history.getCaret();
-		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-
-		GridBagConstraints scrollConstraints = new GridBagConstraints();
-		scrollConstraints.insets = new Insets(0, 0, 5, 5);
-		scrollConstraints.fill = GridBagConstraints.BOTH;
-		scrollConstraints.gridx = 0;
-		scrollConstraints.gridy = 0;
-		scrollConstraints.gridwidth = 3;
-		scrollConstraints.gridheight = 2;
-		scrollConstraints.insets = new Insets(0, 20, 0, 20);
-		history.setEditable(false);
-		contentPane.add(scroll, scrollConstraints);
-
-		JButton btnSend = new JButton("Send");
-		btnSend.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				send(txtMessage.getText());
-			}
-		});
-
-		txtMessage = new JTextField();
-		txtMessage.addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					send(txtMessage.getText());
-				}
-			}
-		});
-		GridBagConstraints gbc_txtMessage = new GridBagConstraints();
-		gbc_txtMessage.insets = new Insets(0, 0, 0, 5);
-		gbc_txtMessage.fill = GridBagConstraints.HORIZONTAL;
-		gbc_txtMessage.gridx = 0;
-		gbc_txtMessage.gridy = 2;
-		gbc_txtMessage.gridwidth = 2;
-		contentPane.add(txtMessage, gbc_txtMessage);
-		txtMessage.setColumns(10);
-		GridBagConstraints gbc_btnSend = new GridBagConstraints();
-		gbc_btnSend.insets = new Insets(0, 0, 0, 5);
-		gbc_btnSend.gridx = 2;
-		gbc_btnSend.gridy = 2;
-		contentPane.add(btnSend, gbc_btnSend);
-
-		setVisible(true);
-		txtMessage.requestFocusInWindow();
+	public void setID(int ID) {
+		this.ID = ID;
 	}
 
-	private void send(String message) {
-		if (message.equals(""))
-			return;
-		message = name + ": " + message;
-		console(message);
-		send(message.getBytes());
-		txtMessage.setText("");
-	}
-
-	public void console(String message) {
-		history.append(message + "\n\r");
-	}
 }
