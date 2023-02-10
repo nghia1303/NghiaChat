@@ -61,8 +61,6 @@ public class Server implements Runnable{
 						e.printStackTrace();
 					}
 					process(packet);
-					clients.add(new ServerClient("Nghia", packet.getAddress(), packet.getPort(), 50 ));
-					System.out.println(clients.get(0).address.toString() + ":" + clients.get(0).port);				
 				}
 			}
 		};
@@ -70,7 +68,7 @@ public class Server implements Runnable{
 	}
 	
 	private void sendToAll(String message) {
-		for (int i = 0 ; i < clients.size()-1; i++) {
+		for (int i = 0 ; i < clients.size(); i++) {
 			ServerClient client = clients.get(i);
 			send(message.getBytes(), client.address, client.port);
 		}
@@ -92,7 +90,7 @@ public class Server implements Runnable{
 	}
 	
 	private void send(String message, InetAddress address, int port) {
-		message+= "/e/";
+		message += "/e/";
 		send(message.getBytes(),address,port);
 	}
 	
@@ -110,8 +108,31 @@ public class Server implements Runnable{
 		else if (string.startsWith("/m/")){
 			sendToAll(string);
 		}
+		else if (string.startsWith("/d/")) {
+			String id = string.split("/d/|/e/")[1];
+			disconnect(Integer.parseInt(id), true);
+		}
 		else {
 			System.out.println(string);
 		}
 	}
-}
+	
+	private void disconnect(int id, boolean status) {
+		ServerClient c = null;
+		for (int i = 0 ; i < clients.size(); i++) {
+			if (clients.get(i).getID() == id) {
+				c = clients.get(i);
+				clients.remove(i);
+				break;
+			}
+		}
+		String message = "";
+		if (status) {
+			message = "Client " + c.name.trim() + " (" + c.getID() + ") @ " + c.address.toString() + ":" + c.port + " disconnected.";
+		}
+		else {
+			message = "Client " + c.name.trim() + " (" + c.getID() + ") @ " + c.address.toString() + ":" + c.port + " timed out";
+		}
+		System.out.println(message);
+	}
+}	
